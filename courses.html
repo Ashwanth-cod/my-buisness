@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Courses - Hazhtech CDC</title>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+    }
+
+    #searchbox {
+        border: 2px solid black;
+        border-radius: 10px;
+        width: 97%;
+        height: 60px;
+        font-size: 1.5em;
+        text-align: left;
+        padding: 10px;
+        margin: 10px;
+    }
+
+    .game-cards {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        padding: 0 5%;
+    }
+
+    .gamecard {
+        height: 400px;
+        width: 250px;
+        border: 5px solid black;
+        border-radius: 3%;
+        margin: 20px;
+        position: relative;
+        overflow: hidden;
+        background-size: cover;
+        background-color: aqua;
+        transition: transform 0.3s ease;
+    }
+
+    .gamecard h2 {
+        position: absolute;
+        left: 0;
+        right: 0;
+        text-align: center;
+        color: #e3f2fd;
+        font-size: 2em;
+        padding: 5px 0;
+        z-index: 1;
+    }
+
+    .gamecard h2 a {
+        color: inherit;
+        text-decoration: none;
+    }
+
+    .gamecard button {
+        margin-top: 350px;
+        height: 50px;
+        background-color: aquamarine;
+        width: 100%;
+        font-size: 1.2em;
+        font-weight: bold;
+        cursor: pointer;
+        border: none;
+        outline: none;
+    }
+
+    .gamecard:hover {
+        transform: scale(1.05);
+    }
+
+    @media (max-width: 768px) {
+        #searchbox {
+            font-size: 1.2em;
+            height: 50px;
+        }
+
+        .gamecard {
+            width: 100%;
+            max-width: 300px;
+            height: 300px;
+        }
+
+        .gamecard h2 {
+            font-size: 1.5em;
+        }
+    }
+
+    @media (min-width: 769px) and (max-width: 1024px) {
+        #searchbox {
+            font-size: 1.5em;
+            height: 60px;
+        }
+
+        .gamecard {
+            width: 45%;
+            height: 350px;
+        }
+
+        .gamecard h2 {
+            font-size: 1.8em;
+        }
+    }
+
+    @media (min-width: 1025px) and (max-width: 1440px) {
+        #searchbox {
+            font-size: 1.8em;
+            height: 70px;
+        }
+
+        .gamecard {
+            width: 30%;
+            height: 400px;
+        }
+
+        .gamecard h2 {
+            font-size: 2em;
+        }
+    }
+
+    @media (min-width: 1441px) {
+        #searchbox {
+            font-size: 2em;
+            height: 80px;
+        }
+
+        .gamecard {
+            width: 20%;
+            height: 450px;
+        }
+
+        .gamecard h2 {
+            font-size: 2.5em;
+        }
+    }
+    </style>
+</head>
+<body>
+    <section class="search">
+        <form action="#">
+            <i class="fas fa-search"></i>
+            <input type="text" id="searchbox" placeholder="Search for your desired courses" onkeyup="search()">    
+        </form>
+    </section>
+    <div class="game-cards" id="game-cards"></div>
+
+    <script>
+        // Course Data (JSON format)
+        const courses = [
+            { name: "Python", price: 2000 },
+            { name: "Flutter Development", price: 2500 },
+            { name: "Full Stack Web Development", price: 3000 },
+            { name: "Machine Learning", price: 3500 },
+            { name: "Data Science", price: 4000 }
+        ];
+
+        // Function to Load Courses Dynamically
+        function loadCourses() {
+            const gameCards = document.getElementById("game-cards");
+            gameCards.innerHTML = ""; // Clear previous content
+
+            courses.forEach(course => {
+                const courseCard = document.createElement("div");
+                courseCard.classList.add("gamecard");
+                
+                courseCard.innerHTML = `
+                    <h2><a href="#" title="${course.name}">${course.name}</a></h2>
+                    <a href="http://127.0.0.1:5500/pay.html?product=${encodeURIComponent(course.name)}&price=${course.price}">
+                        <button>Pay ${course.price} now</button>
+                    </a>
+                `;
+                
+                gameCards.appendChild(courseCard);
+            });
+        }
+
+        // Function to Filter Courses
+        function search() {
+            const searchBox = document.getElementById("searchbox").value.toUpperCase().trim();
+            const gameCards = document.getElementById("game-cards");
+            const gamecard = gameCards.getElementsByClassName("gamecard");
+
+            for (let i = 0; i < gamecard.length; i++) {
+                let match = gamecard[i].getElementsByTagName('h2')[0];
+
+                if (match) {
+                    let textValue = match.textContent || match.innerHTML;
+                    textValue = textValue.trim().toUpperCase();
+                    
+                    gamecard[i].style.display = textValue.indexOf(searchBox) > -1 ? "" : "none";
+                }
+            }
+        }
+
+        // Load Courses on Page Load
+        document.addEventListener("DOMContentLoaded", loadCourses);
+    </script>
+</body>
+</html>

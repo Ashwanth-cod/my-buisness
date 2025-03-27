@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UPI & Google Pay Payment</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script async src="https://pay.google.com/gp/p/js/pay.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+        #qrcode {
+            margin-top: 20px;
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            font-size: 16px;
+        }
+        #gpay-button-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>UPI & Google Pay Payment</h2>
+
+    <!-- Display Product and Price -->
+    <h3 id="product-name"></h3>
+    <p id="product-price"></p>
+
+    <!-- UPI Payment Section -->
+    <button onclick="generateQR()">Generate UPI QR Code</button>
+    <div id="qrcode"></div>
+
+    <!-- Google Pay Button -->
+    <div id="gpay-button-container"></div>
+
+    <script>
+        // Function to extract product details from URL
+        function getProductDetails() {
+            const params = new URLSearchParams(window.location.search);
+            const product = params.get("product") || "Unknown Product";
+            const price = params.get("price") || "0";
+            
+            document.getElementById("product-name").innerText = `Product: ${product}`;
+            document.getElementById("product-price").innerText = `Price: ₹${price}`;
+
+            return { product, price };
+        }
+
+        function generateQR() {
+            const { product, price } = getProductDetails();
+
+            if (!price || price <= 0) {
+                alert("Invalid product price.");
+                return;
+            }
+
+            var upiID = "yourupi@bank"; // Replace with your UPI ID
+            var name = "Your Business"; // Replace with your business name
+            var upiURL = `upi://pay?pa=${upiID}&pn=${encodeURIComponent(name)}&am=${price}&cu=INR`;
+
+            // Clear previous QR code
+            document.getElementById("qrcode").innerHTML = "";
+
+            // Generate new QR code
+            new QRCode(document.getElementById("qrcode"), {
+                text: upiURL,
+                width: 250,
+                height: 250
+            });
+
+            alert("Scan the QR code to complete the payment.");
+        }
+
+        function onGooglePayLoaded() {
+            const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'TEST' });
+
+            const button = paymentsClient.createButton({ onClick: onGooglePayClick });
+            document.getElementById('gpay-button-container').appendChild(button);
+        }
+
+        function onGooglePayClick() {
+            const { product, price } = getProductDetails();
+
+            const paymentDataRequest = {
+                apiVersion: 2,
+                apiVersionMinor: 0,
+                allowedPaymentMethods: [
+                    {
+                        type: "CARD",
+                        parameters: {
+                            allowedAuthMethods: ["PAN_ONLY", "CRYPTOGRAM_3DS"],
+                            allowedCardNetworks: ["VISA", "MASTERCARD"]
+                        },
+                        tokenizationSpecification: {
+                            type: "PAYMENT_GATEWAY",
+                            parameters: {
+                                gateway: "example",
+                                gatewayMerchantId: "your_merchant_id" // Replace with your actual merchant ID
+                            }
+                        }
+                    }
+                ],
+                merchantInfo: {
+                    merchantId: "your_merchant_id",
+                    merchantName: "Your Business Name"
+                },
+                transactionInfo: {
+                    totalPriceStatus: "FINAL",
+                    totalPrice: price,
+                    currencyCode: "INR"
+                }
+            };
+
+            const paymentsClient = new google.payments.api.PaymentsClient({ environment: 'TEST' });
+
+            paymentsClient.loadPaymentData(paymentDataRequest)
+                .then(paymentData => {
+                    console.log("Payment Successful:", paymentData);
+                    alert("Payment Successful!");
+
+                    // Send Email Notification
+                    sendEmailNotification(product, price);
+                })
+                .catch(err => {
+                    console.error("Payment Failed:", err);
+                    alert("Payment Failed!");
+                });
+        }
+
+        function sendEmailNotification(product, price) {
+            fetch('http://127.0.0.1:5500/send_email.php', {  // Replace with your PHP backend URL
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ product: product, price: price })
+            }).then(response => response.json())
+              .then(data => console.log("Email Sent:", data))
+              .catch(error => console.error("Email Error:", error));
+        }
+
+        window.onload = function () {
+            getProductDetails();
+            onGooglePayLoaded();
+        };
+    </script>
+
+</body>
+</html>
